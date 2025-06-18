@@ -1,6 +1,6 @@
 'use strict';
 
-import { formatNumber, formatNumberInput, parseFormattedNumber } from './ui.js';
+import { formatNumber, formatNumberInput, parseFormattedNumber, initializeNumberInput } from './ui.js';
 
 let onFormChangeCallback = () => {};
 
@@ -29,8 +29,7 @@ export function initializeForms(callback) {
         }
 
         if (input.classList.contains('number-input')) {
-            // Add real-time formatting to all number inputs
-            input.addEventListener('input', () => formatNumberInput(input));
+            initializeNumberInput(input);
         }
     });
     
@@ -96,10 +95,7 @@ function addHeirForm() {
         });
 
         if (input.classList.contains('number-input')) {
-            input.addEventListener('input', () => {
-                formatNumberInput(input)
-                updateHeirHeader(form);
-            });
+            initializeNumberInput(input);
         }
     });
 
@@ -112,7 +108,8 @@ function addHeirForm() {
 function updateHeirHeader(formElement) {
     if (!formElement) return;
     const status = formElement.querySelector('select[id^="heirStatus"]')?.value || '';
-    const assetValue = parseFormattedNumber(formElement.querySelector('input[id^="heirAssetValue"]')?.value || '0');
+    const assetValueRaw = formElement.querySelector('input[id^="heirAssetValue"]')?.value || '0';
+    const assetValue = parseFormattedNumber(assetValueRaw);
 
     const statusPreview = formElement.querySelector('.heir-status-preview');
     const assetPreview = formElement.querySelector('.heir-asset-preview');

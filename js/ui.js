@@ -140,47 +140,89 @@ export function updateResults(calculationResult) {
 }
 
 /**
- * 数値を3桁区切りの文字列にフォーマットします。
- * @param {number} num - フォーマットする数値。
- * @returns {string} フォーマットされた文字列。
+ * 全角数字・英字を半角に変換します。
+ * @param {string} str - 変換する文字列。
+ * @returns {string} 変換後の文字列。
+ */
+function toHalfWidth(str) {
+    if (!str) return '';
+    return str.replace(/[！-～]/g, s => {
+        return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+}
+
+/**
+ * 数値をフォーマットして文字列として返します（例: 1000 -> "1,000"）。
+ * @param {number|string} num - フォーマットする数値。
+ * @returns {string} フォーマット後の文字列。
  */
 export function formatNumber(num) {
-    if (typeof num !== 'number' || isNaN(num)) {
-        return '0';
-    }
-    return Math.floor(num).toLocaleString();
+    if (num === null || num === undefined || num === '') return '0';
+    const number = typeof num === 'string' ? parseFormattedNumber(num) : num;
+    return new Intl.NumberFormat('ja-JP').format(number);
 }
 
 /**
- * 入力中の数値をリアルタイムで3桁区切りにフォーマットします。
- * @param {HTMLInputElement} inputElement - 対象のinput要素。
+ * フォーマットされた数値文字列（"1,000"など）をパースして数値に変換します。
+ * @param {string} str - パースする文字列。
+ * @returns {number} パース後の数値。
  */
-export function formatNumberInput(inputElement) {
-    if (!inputElement) return;
-    const value = inputElement.value;
-    const selectionStart = inputElement.selectionStart;
-    const rawValue = parseFormattedNumber(value);
+export function parseFormattedNumber(str) {
+    if (typeof str !== 'string') return isNaN(Number(str)) ? 0 : Number(str);
+    const halfWidthStr = toHalfWidth(str);
+    const numericValue = parseInt(halfWidthStr.replace(/,/g, ''), 10);
+    return isNaN(numericValue) ? 0 : numericValue;
+}
 
-    const formattedValue = rawValue.toLocaleString();
-    inputElement.value = formattedValue;
+/**
+ * 渡された入力要素の値を数値としてフォーマットします。
+ * @param {HTMLInputElement} input - 対象の入力要素。
+ */
+export function formatNumberInput(input) {
+    const originalValue = input.value;
+    const cursorPosition = input.selectionStart;
     
-    // カーソル位置を調整
-    const lengthDiff = formattedValue.length - value.length;
-    if (selectionStart !== null) {
-        inputElement.setSelectionRange(selectionStart + lengthDiff, selectionStart + lengthDiff);
+    // 1. 全角を半角に変換
+    let value = toHalfWidth(originalValue);
+    
+    // 2. 数字とマイナス記号以外を削除
+    value = value.replace(/[^0-9-]/g, '');
+
+    // 3. カンマ区切りにフォーマット
+    const formattedValue = formatNumber(value);
+
+    // 4. 値を更新
+    input.value = formattedValue;
+
+    // 5. カーソル位置を調整
+    if (cursorPosition !== null) {
+        const diff = formattedValue.length - originalValue.length;
+        input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
     }
 }
 
 /**
- * 3桁区切りされた数値文字列をパースして数値に戻します。
- * @param {string} value - フォーマットされた文字列。
- * @returns {number} パースされた数値。
+ * 数値入力フィールドを初期化し、IME対応や自動フォーマットのイベントリスナーを設定します。
+ * @param {HTMLInputElement} input - 初期化する入力要素。
  */
-export function parseFormattedNumber(value) {
-    if (typeof value !== 'string') return 0;
-    // 数字とマイナス記号以外をすべて削除
-    const sanitizedValue = value.replace(/[^\d-]/g, '');
-    return Number(sanitizedValue) || 0;
+export function initializeNumberInput(input) {
+    let isComposing = false;
+
+    input.addEventListener('compositionstart', () => {
+        isComposing = true;
+    });
+
+    input.addEventListener('compositionend', (event) => {
+        isComposing = false;
+        // compositionendイベントの後にinputイベントが発火するため、ここでフォーマットする
+        formatNumberInput(event.target);
+    });
+
+    input.addEventListener('input', (event) => {
+        // IME変換中は処理をスキップ
+        if (isComposing) return;
+        formatNumberInput(event.target);
+    });
 }
 
 /**
