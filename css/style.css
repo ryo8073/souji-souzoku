@@ -240,27 +240,37 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 0.75rem 1rem;
     background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
 }
 .heir-form__header h3 {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.1rem;
+}
+.heir-form__header-summary {
+    display: none; /* Collapsed state summary, hidden by default */
+    flex-grow: 1;
+    text-align: right;
+    margin-right: 1rem;
+    color: #495057;
+    font-size: 0.9rem;
+}
+.heir-form__header-summary .heir-asset-preview {
+    margin-left: 0.75rem;
+    font-weight: bold;
+}
+.heir-form.is-collapsed .heir-form__header-summary {
+    display: inline-block; /* Show summary when collapsed */
 }
 .heir-form__body {
-    padding: 15px;
-    overflow: hidden;
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
     transition: all 0.3s ease-in-out;
-    max-height: 500px; /* High enough for content */
-    opacity: 1;
 }
 .heir-form__body.collapsed {
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    opacity: 0;
-    border-top: none;
+    display: none;
 }
 .heir-form .btn-icon {
     margin-left: 8px;

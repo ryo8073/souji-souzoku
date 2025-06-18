@@ -63,31 +63,66 @@ function addHeirForm() {
         onFormChangeCallback();
     });
 
-    clone.querySelector('.btn-toggle-heir').addEventListener('click', function() {
-        const body = this.closest('.heir-form').querySelector('.heir-form__body');
+    const toggleButton = clone.querySelector('.btn-toggle-heir');
+    toggleButton.addEventListener('click', function() {
+        const form = this.closest('.heir-form');
+        const body = form.querySelector('.heir-form__body');
         const icon = this.querySelector('.icon');
-        const isExpanded = !body.classList.toggle('collapsed');
-        this.setAttribute('aria-expanded', isExpanded);
-        icon.textContent = isExpanded ? '▲' : '▼';
+        
+        const isExpanded = body.classList.toggle('collapsed');
+        form.classList.toggle('is-collapsed', isExpanded);
+
+        this.setAttribute('aria-expanded', !isExpanded);
+        icon.textContent = !isExpanded ? '▲' : '▼';
+    });
+
+    // Also allow toggling by clicking the header itself
+    clone.querySelector('.heir-form__header').addEventListener('click', (e) => {
+        // Prevent toggling when buttons inside the header are clicked
+        if (e.target.closest('button')) return;
+        toggleButton.click();
     });
 
     clone.querySelectorAll('input, select').forEach(input => {
-        // Set unique IDs for labels and inputs
         const oldId = input.id;
         const newId = oldId + heirId;
         input.id = newId;
         const label = clone.querySelector(`label[for="${oldId}"]`);
         if(label) label.htmlFor = newId;
 
-        input.addEventListener('change', onFormChangeCallback);
+        input.addEventListener('change', () => {
+            updateHeirHeader(form);
+            onFormChangeCallback();
+        });
+
         if (input.classList.contains('number-input')) {
-            input.addEventListener('input', () => formatNumberInput(input));
+            input.addEventListener('input', () => {
+                formatNumberInput(input)
+                updateHeirHeader(form);
+            });
         }
     });
 
     heirsContainer.appendChild(clone);
     updateHeirNumbers();
+    updateHeirHeader(form); // Set initial header state
     return heirId;
+}
+
+function updateHeirHeader(formElement) {
+    if (!formElement) return;
+    const status = formElement.querySelector('select[id^="heirStatus"]')?.value || '';
+    const assetValue = parseFormattedNumber(formElement.querySelector('input[id^="heirAssetValue"]')?.value || '0');
+
+    const statusPreview = formElement.querySelector('.heir-status-preview');
+    const assetPreview = formElement.querySelector('.heir-asset-preview');
+
+    if (statusPreview) {
+        statusPreview.textContent = status;
+    }
+    if (assetPreview) {
+        assetPreview.textContent = `D: ${formatNumber(assetValue)} 円`;
+    }
 }
 
 function updateHeirNumbers() {
@@ -160,6 +195,7 @@ export function setFormData(data) {
             form.querySelector('select[id^="heirStatus"]').value = heirData.status || '法定相続人';
             const heirAssetEl = form.querySelector('input[id^="heirAssetValue"]');
             heirAssetEl.value = formatNumber(heirData.assetValue || 0);
+            updateHeirHeader(form); // Update header after setting data
         }
     });
     
