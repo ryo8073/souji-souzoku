@@ -204,9 +204,17 @@ export function formatNumberInput(input) {
 /**
  * 数値入力フィールドを初期化し、IME対応や自動フォーマットのイベントリスナーを設定します。
  * @param {HTMLInputElement} input - 初期化する入力要素。
+ * @param {function} [onChange] - 値が変更されたときに呼び出されるコールバック関数。
  */
-export function initializeNumberInput(input) {
+export function initializeNumberInput(input, onChange) {
     let isComposing = false;
+
+    const triggerChange = (target) => {
+        formatNumberInput(target);
+        if (onChange) {
+            onChange();
+        }
+    };
 
     input.addEventListener('compositionstart', () => {
         isComposing = true;
@@ -214,14 +222,14 @@ export function initializeNumberInput(input) {
 
     input.addEventListener('compositionend', (event) => {
         isComposing = false;
-        // compositionendイベントの後にinputイベントが発火するため、ここでフォーマットする
-        formatNumberInput(event.target);
+        // compositionendイベントの後にinputイベントが発火するため、ここでフォーマットとコールバックを呼ぶ
+        triggerChange(event.target);
     });
 
     input.addEventListener('input', (event) => {
         // IME変換中は処理をスキップ
         if (isComposing) return;
-        formatNumberInput(event.target);
+        triggerChange(event.target);
     });
 }
 

@@ -29,7 +29,7 @@ export function initializeForms(callback) {
         }
 
         if (input.classList.contains('number-input')) {
-            initializeNumberInput(input);
+            initializeNumberInput(input, onFormChangeCallback);
         }
     });
     
@@ -89,13 +89,13 @@ function addHeirForm() {
         const label = clone.querySelector(`label[for="${oldId}"]`);
         if(label) label.htmlFor = newId;
 
-        input.addEventListener('change', () => {
-            updateHeirHeader(form);
-            onFormChangeCallback();
-        });
-
         if (input.classList.contains('number-input')) {
-            initializeNumberInput(input);
+            initializeNumberInput(input, () => {
+                updateHeirHeader(form);
+                onFormChangeCallback();
+            });
+        } else {
+            input.addEventListener('change', onFormChangeCallback);
         }
     });
 
