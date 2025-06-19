@@ -1,144 +1,5 @@
 'use strict';
 
-import { helpTexts } from './data.js';
-
-const modal = document.getElementById('helpModal');
-const modalTitle = document.getElementById('helpModalTitle');
-const modalContent = document.getElementById('helpModalContent');
-const closeModalBtn = document.getElementById('closeHelpModal');
-
-/**
- * UIコンポーネントを初期化します。
- */
-export function initializeUI() {
-    initializeExplanationSection();
-    initializeHelpButtons();
-    initializeModal();
-}
-
-/**
- * 説明セクションの開閉機能を初期化します。
- */
-function initializeExplanationSection() {
-    const toggleBtn = document.getElementById('toggleExplanation');
-    const explanationContent = document.getElementById('explanationContent');
-    
-    if (toggleBtn && explanationContent) {
-        toggleBtn.addEventListener('click', () => {
-            const isExpanded = explanationContent.classList.toggle('expanded');
-            toggleBtn.querySelector('.icon').textContent = isExpanded ? '▲' : '▼';
-            toggleBtn.setAttribute('aria-expanded', isExpanded);
-        });
-    }
-}
-
-/**
- * ヘルプボタンのイベントリスナーを初期化します。
- */
-function initializeHelpButtons() {
-    // input-section 内のヘルプボタンにイベントリスナーを設定
-    document.querySelector('.input-section').addEventListener('click', (e) => {
-        const button = e.target.closest('.btn-help');
-        if (!button) return;
-
-        e.preventDefault(); // labelのデフォルト動作を抑制
-        const helpKey = button.dataset.help;
-        if (helpTexts[helpKey]) {
-            showHelpModal(helpTexts[helpKey].title, helpTexts[helpKey].content);
-        }
-    });
-}
-
-/**
- * ヘルプモーダルの基本機能を初期化します。
- */
-function initializeModal() {
-    if(closeModalBtn) {
-        closeModalBtn.addEventListener('click', hideHelpModal);
-    }
-
-    if(modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                hideHelpModal();
-            }
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.style.display === 'block') {
-            hideHelpModal();
-        }
-    });
-}
-
-/**
- * ヘルプモーダルを表示します。
- * @param {string} title - モーダルのタイトル。
- * @param {string} content - モーダルの内容 (HTML)。
- */
-function showHelpModal(title, content) {
-    if (modalTitle && modalContent && modal) {
-        modalTitle.textContent = title;
-        modalContent.innerHTML = content;
-        modal.style.display = 'block';
-    }
-}
-
-/**
- * ヘルプモーダルを非表示にします。
- */
-function hideHelpModal() {
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-/**
- * 計算結果をUIに表示します。
- * @param {object} calculationResult - 計算結果のデータ。
- */
-export function updateResults(calculationResult) {
-    const { totalDeduction, heirCalculations, status, message } = calculationResult;
-
-    const resultSummaryEl = document.querySelector('.result-summary');
-    const totalDeductionEl = document.getElementById('totalDeduction');
-    const resultTableBodyEl = document.getElementById('resultTableBody');
-
-    // 既存の警告メッセージを削除
-    const existingAlert = resultSummaryEl?.querySelector('.alert');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
-
-    // 新しい警告メッセージを表示 (必要な場合)
-    if (status === '適用不可' && message && resultSummaryEl) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert--warning';
-        alertDiv.textContent = message;
-        // 合計額の前に挿入
-        resultSummaryEl.insertBefore(alertDiv, totalDeductionEl);
-    }
-    
-    if (totalDeductionEl) {
-        totalDeductionEl.textContent = `${formatNumber(totalDeduction)} 円`;
-    }
-
-    if (resultTableBodyEl) {
-        resultTableBodyEl.innerHTML = ''; // Clear previous results
-        heirCalculations.forEach(heir => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${escapeHTML(heir.name) || '未入力'}</td>
-                <td>${escapeHTML(heir.status) || '未選択'}</td>
-                <td>${formatNumber(heir.assetValue)} 円</td>
-                <td>${formatNumber(heir.deductionAmount)} 円</td>
-            `;
-            resultTableBodyEl.appendChild(row);
-        });
-    }
-}
-
 /**
  * 全角数字・英字を半角に変換します。
  * @param {string} str - 変換する文字列。
@@ -180,7 +41,6 @@ export function parseFormattedNumber(str) {
  */
 export function formatNumberInput(input) {
     const originalValue = input.value;
-    const cursorPosition = input.selectionStart;
     
     // 1. 全角を半角に変換
     let value = toHalfWidth(originalValue);
@@ -192,12 +52,13 @@ export function formatNumberInput(input) {
     const formattedValue = formatNumber(value);
 
     // 4. 値を更新
-    input.value = formattedValue;
-
-    // 5. カーソル位置を調整
-    if (cursorPosition !== null) {
+    if (input.value !== formattedValue) {
+        const cursorPosition = input.selectionStart;
         const diff = formattedValue.length - originalValue.length;
-        input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+        input.value = formattedValue;
+        if(cursorPosition !== null) {
+            input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+        }
     }
 }
 
@@ -209,27 +70,30 @@ export function formatNumberInput(input) {
 export function initializeNumberInput(input, onChange) {
     let isComposing = false;
 
-    const triggerChange = (target) => {
-        formatNumberInput(target);
+    const triggerChange = () => {
+        formatNumberInput(input);
         if (onChange) {
             onChange();
         }
     };
 
-    input.addEventListener('compositionstart', () => {
-        isComposing = true;
-    });
-
-    input.addEventListener('compositionend', (event) => {
+    input.addEventListener('compositionstart', () => { isComposing = true; });
+    input.addEventListener('compositionend', () => {
         isComposing = false;
-        // compositionendイベントの後にinputイベントが発火するため、ここでフォーマットとコールバックを呼ぶ
-        triggerChange(event.target);
+        triggerChange();
     });
-
-    input.addEventListener('input', (event) => {
-        // IME変換中は処理をスキップ
-        if (isComposing) return;
-        triggerChange(event.target);
+    input.addEventListener('input', () => {
+        if (!isComposing) {
+            triggerChange();
+        }
+    });
+    // For browsers that don't support compositionend well with all IMEs
+    input.addEventListener('blur', () => {
+        const value = parseFormattedNumber(input.value);
+        input.value = formatNumber(isNaN(value) ? 0 : value);
+        if (onChange) {
+            onChange();
+        }
     });
 }
 
@@ -249,4 +113,99 @@ function escapeHTML(str) {
             "'": '&#39;'
         }[match];
     });
+}
+
+/**
+ * ツールチップ機能を初期化します。
+ * info-iconがクリックされたときにツールチップを表示/非表示します。
+ */
+export function initializeTooltips() {
+    let activeTooltip = null;
+
+    const hideTooltip = () => {
+        if (activeTooltip) {
+            activeTooltip.style.display = 'none';
+            activeTooltip = null;
+        }
+    };
+
+    document.addEventListener('click', (e) => {
+        const infoIcon = e.target.closest('.info-icon');
+
+        if (infoIcon) {
+            e.stopPropagation();
+            const targetId = infoIcon.dataset.tooltipTarget;
+            const tooltip = document.getElementById(targetId);
+
+            if (tooltip) {
+                if (activeTooltip === tooltip) {
+                    hideTooltip();
+                } else {
+                    hideTooltip(); // Hide any other active tooltip
+                    activeTooltip = tooltip;
+                    tooltip.style.display = 'block';
+
+                    // Position the tooltip
+                    const iconRect = infoIcon.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+
+                    let top = iconRect.bottom + window.scrollY + 5;
+                    let left = iconRect.left + window.scrollX - (tooltipRect.width / 2) + (iconRect.width / 2);
+
+                    // Prevent overflow
+                    if (left < 0) left = 5;
+                    if (left + tooltipRect.width > document.documentElement.clientWidth) {
+                        left = document.documentElement.clientWidth - tooltipRect.width - 5;
+                    }
+                     if (top + tooltipRect.height > document.documentElement.clientHeight + window.scrollY) {
+                        top = iconRect.top + window.scrollY - tooltipRect.height - 5;
+                    }
+
+                    tooltip.style.left = `${left}px`;
+                    tooltip.style.top = `${top}px`;
+                }
+            }
+        } else {
+            // Clicked outside an info icon or tooltip
+            if (!e.target.closest('.tooltip-content')) {
+                 hideTooltip();
+            }
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideTooltip();
+        }
+    });
+}
+
+/**
+ * 画面サイズに応じてステップ番号のラベルを動的に変更します。
+ */
+function handleStepLabels() {
+    const step2H2 = document.querySelector('#step2-card h2 .step-label');
+    const step3H2 = document.querySelector('#step3-card h2 .step-label');
+
+    if (!step2H2 || !step3H2) return;
+
+    if (window.innerWidth < 1200) {
+        // Mobile view: 2次相続がStep2, 1次相続の内容がStep3
+        step3H2.textContent = 'STEP 2';
+        step2H2.textContent = 'STEP 3';
+    } else {
+        // Desktop view: 元に戻す
+        step2H2.textContent = 'STEP 2';
+        step3H2.textContent = 'STEP 3';
+    }
+}
+
+/**
+ * レスポンシブ対応のイベントハンドラを初期化します。
+ */
+export function initializeResponsiveHandlers() {
+    // 初回実行
+    handleStepLabels();
+    // ウィンドウリサイズ時にも実行
+    window.addEventListener('resize', handleStepLabels);
 }

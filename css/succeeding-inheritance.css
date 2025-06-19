@@ -1,0 +1,419 @@
+/* succeeding-inheritance.css */
+
+:root {
+    --card-min-width: 260px;
+    --connector-width: 150px;
+}
+
+/* グリッドレイアウト */
+.simulation-grid {
+    display: grid;
+    /* 7-column grid for precise alignment of sub-cards */
+    /* col 1-2: step1, col 3: arrow1, col 4-5: step2, col 6: arrow2, col 7: step3 */
+    grid-template-columns: 0.5fr 0.5fr var(--connector-width) 0.5fr 0.5fr var(--connector-width) 1.5fr;
+    grid-template-rows: auto auto;
+    gap: 16px 24px;
+    align-items: start;
+}
+
+#step1-card  { grid-column: 1 / span 2; grid-row: 1; }
+#arrow1      { grid-column: 3; grid-row: 1; }
+#step3-card  { grid-column: 4 / span 2; grid-row: 1; }
+#arrow2      { grid-column: 6; grid-row: 1; }
+#step5-card  { grid-column: 7; grid-row: 1 / span 2; } /* Spans 2 rows */
+
+#step2-card { 
+    grid-column: 2 / span 2; 
+    grid-row: 2; 
+}
+#step4-card { 
+    grid-column: 5 / span 2;
+    grid-row: 2;
+}
+
+.arrow-wrapper {
+    padding-top: 5rem;
+    text-align: center;
+}
+
+.flow-card, .flow-card-small {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.flow-card-small {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.flow-card {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+#first-inheritance-card,
+#second-inheritance-card {
+    width: 320px;
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    font-size: 1.2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.step-label {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Increased gap */
+}
+
+.card-footer {
+    padding: 0.75rem 1.25rem; /* v-padding reduced */
+    border-top: 1px solid #eee;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Increased gap slightly for better spacing */
+}
+
+.card-footer h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+#total-deduction-amount {
+    font-size: 1.0rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0;
+    text-align: right;
+}
+
+.arrow-wrapper .arrow-label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+.arrow-wrapper .arrow-body {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #ccc, #ccc 50%, transparent 50%);
+    background-size: 16px 2px;
+    position: relative;
+    margin: 8px 0;
+}
+
+.arrow-wrapper .arrow-body::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: -5px;
+    border: solid #ccc;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 5px;
+    transform: rotate(-45deg);
+}
+
+#inheritance-period-display {
+    font-weight: bold;
+    color: #333;
+}
+
+.summary-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    align-items: baseline;
+}
+
+.summary-label, .summary-value {
+    font-size: 0.8rem; /* Totals font size reduced */
+    margin: 0;
+}
+.summary-value {
+    font-weight: normal;
+    text-align: right; /* Right-align the value */
+}
+.summary-value.total-deduction {
+    font-weight: normal; /* Make same as label */
+}
+
+.total-deduction-pill {
+    background-color: var(--primary-color-light);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 0.5rem;
+}
+
+.total-deduction-pill .pill-label {
+    font-size: 1rem;
+    color: var(--primary-color-dark);
+    font-weight: 500;
+}
+
+.total-deduction-pill .pill-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color-dark);
+}
+
+/* 相続人フォーム */
+#heirsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.heir-form {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background-color: #fcfcfc;
+}
+
+.heir-form__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Align to top for multi-line info */
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.heir-form__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.heir-form__title {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.heir-asset-preview, .heir-deduction-preview {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.heir-form.is-collapsed .heir-form__header:hover {
+    border-bottom-color: #e2e8f0;
+}
+
+/* Cleanup old styles */
+.heir-deduction-pill {
+    display: none; /* Hide instead of removing for safety */
+}
+
+/* Heir Form Styles */
+.heir-form__body {
+    padding: 1.25rem;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.heir-form__body.collapsed {
+    display: none;
+}
+
+.heir-form__title .heir-status-pill {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background-color: #e0e0e0;
+    color: #333;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* 全体的なアクションボタン */
+.actions {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.stacked-input-group {
+    text-align: left;
+}
+
+.stacked-input-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    color: #333;
+    line-height: 1.4;
+    position: relative;
+}
+
+.input-with-unit, .stacked-input-group input[type="date"] {
+    display: flex;
+    align-items: center;
+}
+
+.input-with-unit input, .stacked-input-group input[type="text"], .stacked-input-group input[type="date"] {
+    flex-grow: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.input-with-unit .unit {
+    margin-left: 0.5rem;
+}
+
+.heir-deduction-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    background-color: var(--primary-color-light);
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-weight: 500;
+}
+.heir-deduction-pill .pill-label {
+    font-size: 0.8rem;
+}
+.heir-deduction-pill .heir-deduction-value {
+    font-size: 1rem; /* Reduced font size */
+    font-weight: bold;
+    color: var(--primary-color-dark);
+}
+
+/* Tooltip Styles */
+.info-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    background-color: #a0aec0;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 8px;
+    vertical-align: middle;
+    transition: background-color 0.2s;
+}
+.info-icon:hover {
+    background-color: #4a5568;
+}
+
+.tooltip-content {
+    position: absolute;
+    background-color: #2d3748;
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    width: 320px;
+    z-index: 100;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+.tooltip-content h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    color: #a0aec0;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 0.5rem;
+}
+.tooltip-content p {
+    margin: 0 0 0.5rem;
+}
+.tooltip-content a {
+    color: #63b3ed;
+    text-decoration: none;
+}
+.tooltip-content a:hover {
+    text-decoration: underline;
+}
+.tooltip-content .example {
+    background-color: #4a5568;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+.tooltip-content .example p {
+    margin: 0;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 1200px) {
+    .simulation-grid {
+        grid-template-columns: 1fr !important; /* Stack everything */
+        grid-template-rows: auto !important;
+        display: grid !important;
+    }
+
+    /* Hide arrow visuals, but not the whole wrapper */
+    #arrow1 .arrow-label, #arrow1 .arrow-body,
+    #arrow2 { /* Hide arrow2 completely */
+        display: none !important;
+    }
+
+    #arrow1 {
+        display: block !important;
+        padding: 1rem 0 !important;
+        text-align: center;
+    }
+
+    /* Reset all items to the default flow */
+    #step1-card, #step2-card, #step3-card, #step4-card, #step5-card, #arrow1 {
+        grid-column: 1 / -1 !important; /* Span full width */
+        grid-row: auto !important;
+    }
+
+    /* Define the new mobile stacking order */
+    #step1-card { grid-row: 1 !important; }
+    #step3-card { grid-row: 2 !important; }
+    #arrow1     { grid-row: 3 !important; } /* Move period display here */
+    #step2-card { grid-row: 4 !important; }
+    #step4-card { grid-row: 5 !important; }
+    #step5-card { grid-row: 6 !important; }
+} 

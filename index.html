@@ -3,315 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>相次相続控除額 計算シミュレーター</title>
+    <title>相次相続控除シミュレーター</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/family-tree.css">
+    <link rel="stylesheet" href="css/succeeding-inheritance.css">
     <link rel="stylesheet" href="css/print.css" media="print">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header class="header">
+    <header>
         <div class="container">
-            <h1 class="header__title">相次相続控除額 計算シミュレーター（家系図表示版）</h1>
-            <div class="header__actions">
-                <!-- <button id="saveDataBtn" class="btn btn--outline">データ保存</button> -->
-                <!-- <button id="loadDataBtn" class="btn btn--outline">データ読込</button> -->
-                <button id="printBtn" class="btn btn--outline">印刷</button>
-                <button id="resetBtn" class="btn btn--outline btn--danger">リセット</button>
-            </div>
+            <h1>相次相続控除シミュレーター</h1>
+            <p>10年以内に2度目の相続を経験された方のための、相続税の相次相続控除額を計算するツールです。</p>
         </div>
     </header>
 
     <main class="container">
-        <section class="explanation-section card">
-            <div class="card__header">
-                <h2>相次相続控除とは</h2>
-                <button id="toggleExplanation" class="btn-icon" aria-label="説明を開く/閉じる" aria-expanded="false">
-                    <span class="icon">▼</span>
-                </button>
-            </div>
-            <div class="card__body" id="explanationContent">
-                <p>相次相続控除とは、10年以内に発生した2回の相続において、1回目の相続で支払った相続税の一部を2回目の相続税から控除できる制度です。</p>
-                <p>短期間に2回相続が発生した場合、同じ財産に対して短期間に2度相続税が課税されることになり、相続人の税負担が過重になる可能性があります。この負担を軽減するために設けられた制度です。</p>
-                
-                <h3>適用条件</h3>
-                <ol>
-                    <li>前回の相続から10年以内に次の相続が発生していること</li>
-                    <li>前回の相続で相続税を納付していること</li>
-                    <li>今回の相続人が法定相続人であること</li>
-                </ol>
-                
-                <h3>控除額の計算式</h3>
-                <div class="formula">
-                    <p>控除額 = A × (C / (B - A)) × (D / C) × (10 - E) / 10</p>
-                    <ul>
-                        <li>A: 前回の相続で被相続人が納めた相続税額</li>
-                        <li>B: 前回の相続で被相続人が取得した財産の価額</li>
-                        <li>C: 今回の相続人が受ける相続財産の総額</li>
-                        <li>D: 各相続人が今回取得した財産の価額</li>
-                        <li>E: 前回の相続からの経過年数（1年未満切り捨て）</li>
-                    </ul>
+        <div class="simulation-grid">
+            <!-- Row 1: Main Flow -->
+            <div class="flow-card" id="step1-card">
+                <div class="card-header">
+                    <h2><span class="step-label">STEP 1</span>1次相続</h2>
+                </div>
+                <div class="card-body">
+                    <div class="stacked-input-group">
+                        <label for="firstDeceasedName">前回の被相続人</label>
+                        <input type="text" id="firstDeceasedName" placeholder="（例）山田 太郎">
+                    </div>
+                    <div class="stacked-input-group">
+                        <label for="firstInheritanceDate">死亡日</label>
+                        <input type="date" id="firstInheritanceDate">
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <div class="main-content">
-            <section class="input-section">
-                <!-- =============================================================== -->
-                <!-- Card 1: 今回の相続（二次相続）に関する情報 -->
-                <!-- =============================================================== -->
-                <div class="card">
-                    <div class="card__header">
-                        <h2>今回の相続（二次相続）</h2>
-                    </div>
-                    <div class="card__body">
-                        <div class="form-group">
-                            <label for="deceasedName">被相続人名：</label>
-                            <input type="text" id="deceasedName" class="form-control" placeholder="例：相続 太郎">
-                        </div>
-                        <div class="form-group">
-                            <label for="secondInheritanceDate">死亡日：</label>
-                            <input type="date" id="secondInheritanceDate" class="form-control">
-                            <div class="japanese-date-display" id="secondJapaneseDate"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="arrow-wrapper" id="arrow1">
+                <p class="arrow-label">1次相続</p>
+                <div class="arrow-body"></div>
+                <p id="inheritance-period-display">
+                    <span class="period-text">期間 (E): - 年</span>
+                    <span class="info-icon" data-tooltip-target="tooltip-e">?</span>
+                </p>
+            </div>
 
-                <!-- =============================================================== -->
-                <!-- Card 2: 前回の相続（一次相続）に関する情報 -->
-                <!-- =============================================================== -->
-                <div class="card">
-                    <div class="card__header">
-                        <h2>前回の相続（一次相続）</h2>
+            <div class="flow-card" id="step3-card">
+                <div class="card-header">
+                    <h2><span class="step-label">STEP 3</span>2次相続</h2>
+                </div>
+                <div class="card-body">
+                    <div class="stacked-input-group">
+                        <label for="secondDeceasedName">今回の被相続人</label>
+                        <input type="text" id="secondDeceasedName" placeholder="（例）山田 花子">
                     </div>
-                    <div class="card__body">
-                        <div class="form-group">
-                            <label for="firstDeceasedRelation">被相続人との続柄：</label>
-                            <select id="firstDeceasedRelation" class="form-control">
-                                <option value="spouse">配偶者</option>
-                                <option value="child">子</option>
-                                <option value="father">父</option>
-                                <option value="mother">母</option>
-                                <option value="sibling">兄弟姉妹</option>
-                                <option value="grandfather">祖父</option>
-                                <option value="grandmother">祖母</option>
-                                <option value="grandchild">孫</option>
-                                <option value="other">その他</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="firstInheritanceDate">死亡日：</label>
-                            <input type="date" id="firstInheritanceDate" class="form-control">
-                            <div class="japanese-date-display" id="firstJapaneseDate"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="yearsPassed">
-                                E: 経過年数：
-                                <button type="button" class="btn-icon btn-help" data-help="fieldE" aria-label="説明を表示">？</button>
-                            </label>
-                            <input type="text" id="yearsPassed" class="form-control" readonly>
-                            <small class="form-text">※1年未満は切り捨て</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="previousTaxAmount">
-                                A: 今回の被相続人が納めた相続税額：
-                                <button type="button" class="btn-icon btn-help" data-help="fieldA" aria-label="説明を表示">？</button>
-                            </label>
-                            <div class="input-group">
-                                <input type="text" id="previousTaxAmount" class="form-control number-input" placeholder="0" inputmode="numeric">
-                                <span class="input-group-text">円</span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="previousAssetValue">
-                                B: 今回の被相続人が取得した財産の価額：
-                                <button type="button" class="btn-icon btn-help" data-help="fieldB" aria-label="説明を表示">？</button>
-                            </label>
-                            <div class="input-group">
-                                <input type="text" id="previousAssetValue" class="form-control number-input" placeholder="0" inputmode="numeric">
-                                <span class="input-group-text">円</span>
-                            </div>
-                        </div>
+                    <div class="stacked-input-group">
+                        <label for="secondInheritanceDate">死亡日</label>
+                        <input type="date" id="secondInheritanceDate">
                     </div>
                 </div>
-                
-                <!-- =============================================================== -->
-                <!-- Card 3: 今回の相続人に関する情報 -->
-                <!-- =============================================================== -->
-                <div class="card">
-                    <div class="card__header">
-                        <h2>今回の相続人</h2>
-                    </div>
-                    <div class="card__body">
-                        <div class="form-group">
-                            <label for="totalAssetValue">
-                                C: 今回の相続財産の総額：
-                                <button type="button" class="btn-icon btn-help" data-help="fieldC" aria-label="説明を表示">？</button>
-                            </label>
-                            <div class="input-group">
-                                <input type="text" id="totalAssetValue" class="form-control number-input" placeholder="0" inputmode="numeric">
-                                <span class="input-group-text">円</span>
-                            </div>
-                        </div>
-                        <div id="heirsContainer">
-                            <!-- Heir forms will be dynamically added here -->
-                        </div>
-                        <button id="addHeirBtn" class="btn btn--secondary btn--full-width">＋ 相続人を追加</button>
-                    </div>
-                </div>
-            </section>
+            </div>
 
-            <section class="family-tree-section card">
-                <div class="card__header">
-                    <h2>家系図</h2>
-                    <div class="family-tree-section__controls">
-                        <button id="zoomInBtn" class="btn-icon" aria-label="拡大">+</button>
-                        <button id="zoomOutBtn" class="btn-icon" aria-label="縮小">-</button>
-                        <button id="resetZoomBtn" class="btn-icon" aria-label="リセット">↺</button>
+            <div class="arrow-wrapper" id="arrow2">
+                <p class="arrow-label">2次相続</p>
+                <div class="arrow-body"></div>
+            </div>
+
+            <div class="flow-card" id="step5-card">
+                <div class="card-header">
+                    <h2><span class="step-label">STEP 5</span>今回の相続人</h2>
+                    <button id="addHeirBtn" class="btn btn-primary">相続人を追加</button>
+                </div>
+                <div class="card-body">
+                    <div id="heirsContainer"></div>
+                </div>
+                <div class="card-footer">
+                    <div class="summary-item">
+                        <h3 class="summary-label">取得財産価額 合計</h3>
+                        <p id="total-asset-value-summary" class="summary-value">0 円</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3 class="summary-label">相次相続控除額 合計</h3>
+                        <p id="total-deduction-amount" class="summary-value total-deduction">0 円</p>
                     </div>
                 </div>
-                <div class="card__body">
-                    <div id="familyTreeContainer" class="family-tree-container">
-                        <!-- SVG family tree will be rendered here -->
+            </div>
+
+            <!-- Row 2: Sub Cards -->
+            <div class="flow-card" id="step2-card">
+                <div class="card-header">
+                    <h2><span class="step-label">STEP 2</span>1次相続の内容</h2>
+                </div>
+                <div class="card-body">
+                    <div class="stacked-input-group">
+                        <label for="previousTaxAmount">
+                            A: 前の相続で今回の被相続人(<span id="deceasedNameForA">...</span>)が納付した相続税額
+                            <span class="info-icon" data-tooltip-target="tooltip-a">?</span>
+                        </label>
+                        <div class="input-with-unit">
+                            <input type="text" id="previousTaxAmount" class="number-input" placeholder="0"><span class="unit">円</span>
+                        </div>
+                    </div>
+                    <div class="stacked-input-group">
+                        <label for="previousAssetValue">
+                            B: 前の相続で今回の被相続人(<span id="deceasedNameForB">...</span>)が取得した財産の価額
+                            <span class="info-icon" data-tooltip-target="tooltip-b">?</span>
+                        </label>
+                        <div class="input-with-unit">
+                            <input type="text" id="previousAssetValue" class="number-input" placeholder="0"><span class="unit">円</span>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
+
+            <div class="flow-card" id="step4-card">
+                <div class="card-header">
+                    <h2><span class="step-label">STEP 4</span>2次相続の内容</h2>
+                </div>
+                <div class="card-body">
+                    <div class="stacked-input-group">
+                        <label for="totalAssetValue">
+                            C: 今回の相続で全員が取得した純資産価額の合計
+                            <span class="info-icon" data-tooltip-target="tooltip-c">?</span>
+                        </label>
+                        <div class="input-with-unit">
+                            <input type="text" id="totalAssetValue" class="number-input" placeholder="0"><span class="unit">円</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <section class="results-section card">
-            <div class="card__header">
-                <h2>計算結果</h2>
-            </div>
-            <div class="card__body">
-                <div class="result-summary">
-                    <h3>相次相続控除額（合計）</h3>
-                    <div class="total-deduction" id="totalDeduction">0 円</div>
-                </div>
-                <div class="result-details">
-                    <h3>計算詳細（相続人ごと）</h3>
-                    <table class="result-table">
-                        <thead>
-                            <tr>
-                                <th>相続人</th>
-                                <th>ステータス</th>
-                                <th>取得財産額（D）</th>
-                                <th>控除額</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultTableBody">
-                            <!-- Results will be dynamically added here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+        <div class="actions">
+            <button id="resetBtn" class="btn btn-secondary">リセット</button>
+            <!-- <button id="saveBtn" class="btn btn-primary">保存</button> -->
+            <!-- <button id="loadBtn" class="btn btn-secondary">読込</button> -->
+            <button id="printBtn" class="btn btn-secondary" onclick="window.print()">印刷する</button>
+        </div>
     </main>
 
-    <footer class="footer">
+    <footer>
         <div class="container">
-            <p>© 2025 相次相続控除額 計算シミュレーター</p>
-            <p class="disclaimer">このシミュレーターは参考情報の提供を目的としています。実際の相続税申告には専門家にご相談ください。</p>
+            <p>&copy; 2024 相続シミュレーター. All Rights Reserved.</p>
         </div>
     </footer>
 
-    <!-- Heir Form Template -->
+    <!-- Templates -->
     <template id="heirFormTemplate">
-        <div class="heir-form" data-heir-id="">
+        <div class="heir-form is-collapsed">
             <div class="heir-form__header">
-                <h3>相続人 <span class="heir-form__number"></span></h3>
-                <div class="heir-form__header-summary">
-                    <span class="heir-status-preview"></span>
-                    <span class="heir-asset-preview"></span>
+                <div class="heir-form__info">
+                    <h4 class="heir-form__title">
+                        <span class="heir-form__number">1</span>.
+                        <span class="heir-name-preview">未入力</span>
+                        <span class="heir-status-pill"></span>
+                    </h4>
+                    <p class="heir-asset-preview">取得財産: 0 円</p>
+                    <p class="heir-deduction-preview">相次相続控除額: 0 円</p>
                 </div>
-                <div>
-                    <button class="btn-toggle-heir btn-icon" aria-label="開閉" aria-expanded="true">
-                        <span class="icon">▲</span>
+                <div class="heir-form__actions">
+                    <button class="btn btn-secondary btn-toggle-heir" aria-expanded="false">
+                        <span class="icon">▼</span>
                     </button>
-                    <button class="btn-remove-heir btn-icon" aria-label="相続人を削除">×</button>
+                    <button class="btn btn-danger btn-remove-heir">×</button>
                 </div>
             </div>
-            <div class="heir-form__body">
-                <div class="form-group">
-                    <label for="heirName_">名前：</label>
-                    <input type="text" id="heirName_" class="form-control heir-name" placeholder="例：山田一郎">
-                </div>
-                <div class="form-group">
-                    <label for="heirRelation_">続柄：</label>
-                    <select id="heirRelation_" class="form-control heir-relation">
-                        <option value="配偶者">配偶者</option>
-                        <optgroup label="子">
-                            <option value="長男">長男</option>
-                            <option value="二男">二男</option>
-                            <option value="三男">三男</option>
-                            <option value="長女">長女</option>
-                            <option value="二女">二女</option>
-                            <option value="三女">三女</option>
-                            <option value="養子（男）">養子（男）</option>
-                            <option value="養子（女）">養子（女）</option>
-                        </optgroup>
-                        <optgroup label="代襲相続人">
-                            <option value="孫（代襲相続）">孫（代襲相続）</option>
-                            <option value="甥（代襲相続）">甥（代襲相続）</option>
-                            <option value="姪（代襲相続）">姪（代襲相続）</option>
-                        </optgroup>
-                        <optgroup label="直系尊属">
-                            <option value="被相続人の父">父</option>
-                            <option value="被相続人の母">母</option>
-                        </optgroup>
-                        <optgroup label="兄弟姉妹">
-                            <option value="兄">兄</option>
-                            <option value="弟">弟</option>
-                            <option value="姉">姉</option>
-                            <option value="妹">妹</option>
-                        </optgroup>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="heirStatus_">ステータス：</label>
-                    <select id="heirStatus_" class="form-control heir-status">
-                        <option value="法定相続人" selected>法定相続人</option>
-                        <option value="死亡">死亡</option>
-                        <option value="相続放棄">相続放棄</option>
-                        <option value="相続欠格">相続欠格</option>
-                        <option value="法定外">法定外</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="heirAssetValue_">
-                        D: 取得した財産の価額：
-                        <button type="button" class="btn-icon btn-help" data-help="fieldD" aria-label="説明を表示">？</button>
-                    </label>
+            <div class="heir-form__body collapsed">
+                <div class="heir-form__grid">
                     <div class="input-group">
-                        <input type="text" id="heirAssetValue_" class="form-control number-input heir-asset-value" placeholder="0" inputmode="numeric">
-                        <span class="input-group-text">円</span>
+                        <label for="heirName">氏名</label>
+                        <input type="text" id="heirName" class="heir-name" placeholder="（例）山田 一郎">
+                    </div>
+                    <div class="input-group">
+                        <label for="heirStatus">ステータス</label>
+                        <select id="heirStatus">
+                            <option value="法定相続人">法定相続人</option>
+                            <option value="相続放棄">相続放棄</option>
+                            <option value="相続欠格">相続欠格</option>
+                            <option value="法定外">法定外</option>
+                            <option value="なし">なし</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="heirAssetValue">
+                            D: 取得財産の価額
+                            <span class="info-icon" data-tooltip-target="tooltip-d">?</span>
+                        </label>
+                        <div class="input-with-unit">
+                            <input type="text" id="heirAssetValue" class="number-input" placeholder="0"><span class="unit">円</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </template>
+    
+    <script type="module" src="js/main.js"></script>
 
-    <!-- Help Modal (if needed) -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="helpModalTitle">ヘルプ</h2>
-                <button id="closeHelpModal" class="btn-close" aria-label="閉じる">×</button>
-            </div>
-            <div class="modal-body" id="helpModalContent">
-                <!-- Help content will be dynamically loaded here -->
-            </div>
+    <!-- Tooltip Contents -->
+    <div id="tooltip-a" class="tooltip-content" style="display: none;">
+        <h4>A：一次相続で課せられた相続税額</h4>
+        <p><strong>説明</strong></p>
+        <p>A は「二次相続の被相続人が一次相続の際に課せられた相続税額」です。二次相続の被相続人自身が前回（一次相続）で納めた相続税額を指します。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <p>この金額は、相続時精算課税制度適用分の贈与税額控除後の額を用います。納税猶予で免除された相続税額や延滞税・加算税は含みません。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <p>同じ定義は税理士法人マルイシの解説にもあり、相続税の納付済額をベースとすることが強調されています。 <a href="https://www.maruishi-tax.jp/souzoku-report/1083/" target="_blank" rel="noopener noreferrer">maruishi-tax.jp</a></p>
+        <div class="example">
+            <p><strong>例</strong></p>
+            <p>前回の相続で納めた相続税額が 1,000万円 であった場合、入力する A は 10,000,000 円 となります。</p>
         </div>
     </div>
-
-    <script src="js/date-utils.js" type="module" defer></script>
-    <script src="js/calculator.js" type="module" defer></script>
-    <script src="js/storage.js" type="module" defer></script>
-    <script src="js/ui.js" type="module" defer></script>
-    <script src="js/family-tree.js" type="module" defer></script>
-    <script src="js/form-handler.js" type="module" defer></script>
-    <script src="js/main.js" type="module" defer></script>
+    <div id="tooltip-b" class="tooltip-content" style="display: none;">
+        <h4>B：一次相続で取得した純資産価額</h4>
+        <p><strong>説明</strong></p>
+        <p>B は「二次相続の被相続人が一次相続で取得した純資産価額」を指します。取得した財産の価額から債務および葬式費用を差し引いた金額です。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <p>純資産価額とは、取得財産（現金、不動産、株式など）＋相続時精算課税適用財産－債務－葬式費用です。 <a href="https://zeirisi.co.jp/souzoku/soujisouzoku-deduction/#B" target="_blank" rel="noopener noreferrer">zeirisi.co.jp</a></p>
+        <p>たとえば借入金や葬式費用などを含めて差し引く点がポイントです。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4129.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <div class="example">
+            <p><strong>例</strong></p>
+            <p>取得不動産価額 1億円 ＋ 預金 5,000万円 － 借入金 2,000万円 － 葬式費用 500万円 ＝ 純資産価額 1億3,000万円</p>
+        </div>
+    </div>
+    <div id="tooltip-c" class="tooltip-content" style="display: none;">
+        <h4>C：二次相続で取得者全員の純資産価額合計</h4>
+        <p><strong>説明</strong></p>
+        <p>C は「今回の相続で相続人・受遺者などが取得した純資産価額の合計額」です。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <p>つまり、配偶者や子、代襲相続者など全員分の純資産価額を合算します。 <a href="https://www.maruishi-tax.jp/souzoku-report/1083/" target="_blank" rel="noopener noreferrer">maruishi-tax.jp</a></p>
+        <p>計算式では C で全体の分母をとることで、各相続人の取得割合が反映されます。 <a href="https://www.asahichuo-tax.jp/souzoku-shinkoku/soujisouzoku/" target="_blank" rel="noopener noreferrer">asahichuo-tax.jp</a></p>
+        <div class="example">
+            <p><strong>例</strong></p>
+            <p>配偶者が 6,000万円、長男が 3,000万円、次男が 1,000万円を取得 → C = 6,000万 + 3,000万 + 1,000万 = 1億円</p>
+        </div>
+    </div>
+    <div id="tooltip-d" class="tooltip-content" style="display: none;">
+         <h4>D：各相続人が取得した純資産価額</h4>
+        <p><strong>説明</strong></p>
+        <p>D は「相次相続控除の適用を受ける各相続人が今回取得した純資産価額」です。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <p>C が全体の合計であるのに対し、D は個別の相続人ひとり分の取得額を指します。 <a href="https://zeirisi.co.jp/souzoku/soujisouzoku-deduction/#D" target="_blank" rel="noopener noreferrer">zeirisi.co.jp</a></p>
+        <p>したがって、各人ごとに D を入力し、相次相続控除額を按分計算します。 <a href="https://www.maruishi-tax.jp/souzoku-report/1083/" target="_blank" rel="noopener noreferrer">maruishi-tax.jp</a></p>
+        <div class="example">
+            <p><strong>例</strong></p>
+            <p>長男が取得した純資産価額が 3,000万円 の場合、長男の D は 30,000,000 円</p>
+        </div>
+    </div>
+    <div id="tooltip-e" class="tooltip-content" style="display: none;">
+        <h4>E：前回相続から今回相続までの期間（年数）</h4>
+        <p><strong>説明</strong></p>
+        <p>E は「一次相続から二次相続までの期間」を年単位で表し、1年未満は切り捨てます。 <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noopener noreferrer">nta.go.jp</a></p>
+        <p>相次相続控除は一次相続から10年以内が要件なので、E が 0～9 の範囲であることを確認します。 <a href="httpsa://www.e-isansouzoku.com/souzokuzei/keisan/soujisouzoku/" target="_blank" rel="noopener noreferrer">e-isansouzoku.com</a></p>
+        <div class="example">
+            <p><strong>例</strong></p>
+            <p>一次相続が 2016年3月26日、二次相続が 2023年5月4日 → 経過期間は 7年（E = 7）</p>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 'use strict';
 
-import { formatNumber, formatNumberInput, parseFormattedNumber, initializeNumberInput } from './ui.js';
+import { formatNumber, parseFormattedNumber, initializeNumberInput } from './ui.js';
 
 let onFormChangeCallback = () => {};
 
@@ -19,13 +19,12 @@ export function initializeForms(callback) {
     }
 
     // すべての初期入力フィールドに変更リスナーを設定
-    document.querySelectorAll('.input-section input, .input-section select').forEach(input => {
-        if (input.type !== 'date' && input.tagName !== 'SELECT') {
-             // Use the 'input' event for real-time updates
-            input.addEventListener('input', onFormChangeCallback);
-        } else {
-            // 'change' is better for date and select inputs
+    document.querySelectorAll('.simulation-grid input, .simulation-grid select').forEach(input => {
+        if (input.type === 'date' || input.tagName === 'SELECT') {
             input.addEventListener('change', onFormChangeCallback);
+        } else {
+             // 'input' event for real-time updates on text fields
+            input.addEventListener('input', onFormChangeCallback);
         }
 
         if (input.classList.contains('number-input')) {
@@ -33,7 +32,7 @@ export function initializeForms(callback) {
         }
     });
     
-    // 初期相続人フォームを1つ追加
+    // 初期状態で相続人フォームを1つ追加
     if (document.getElementById('heirsContainer').children.length === 0) {
         addHeirForm();
     }
@@ -48,13 +47,11 @@ function addHeirForm() {
     const template = document.getElementById('heirFormTemplate');
     if (!heirsContainer || !template) return;
 
-    const heirCount = heirsContainer.children.length + 1;
     const clone = document.importNode(template.content, true);
     
     const heirId = `heir_${Date.now()}`;
     const form = clone.querySelector('.heir-form');
     form.dataset.heirId = heirId;
-    form.querySelector('.heir-form__number').textContent = heirCount;
 
     clone.querySelector('.btn-remove-heir').addEventListener('click', function() {
         this.closest('.heir-form').remove();
@@ -63,63 +60,40 @@ function addHeirForm() {
     });
 
     const toggleButton = clone.querySelector('.btn-toggle-heir');
-    toggleButton.addEventListener('click', function() {
-        const form = this.closest('.heir-form');
+    const header = clone.querySelector('.heir-form__header');
+    
+    const toggleCollapse = () => {
         const body = form.querySelector('.heir-form__body');
-        const icon = this.querySelector('.icon');
-        
-        const isExpanded = body.classList.toggle('collapsed');
-        form.classList.toggle('is-collapsed', isExpanded);
+        const isCollapsed = body.classList.toggle('collapsed');
+        form.classList.toggle('is-collapsed', isCollapsed);
+        toggleButton.setAttribute('aria-expanded', !isCollapsed);
+        toggleButton.querySelector('.icon').textContent = isCollapsed ? '▼' : '▲';
+    };
 
-        this.setAttribute('aria-expanded', !isExpanded);
-        icon.textContent = !isExpanded ? '▲' : '▼';
+    header.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return; // Don't toggle if a button was clicked
+        toggleCollapse();
     });
 
-    // Also allow toggling by clicking the header itself
-    clone.querySelector('.heir-form__header').addEventListener('click', (e) => {
-        // Prevent toggling when buttons inside the header are clicked
-        if (e.target.closest('button')) return;
-        toggleButton.click();
-    });
-
+    // Initialize all inputs within the new heir form
     clone.querySelectorAll('input, select').forEach(input => {
         const oldId = input.id;
-        const newId = oldId + heirId;
+        const newId = `${oldId}_${heirId}`;
         input.id = newId;
         const label = clone.querySelector(`label[for="${oldId}"]`);
-        if(label) label.htmlFor = newId;
+        if (label) label.htmlFor = newId;
 
         if (input.classList.contains('number-input')) {
-            initializeNumberInput(input, () => {
-                updateHeirHeader(form);
-                onFormChangeCallback();
-            });
+            initializeNumberInput(input, onFormChangeCallback);
         } else {
-            input.addEventListener('change', onFormChangeCallback);
+             input.addEventListener('input', onFormChangeCallback);
+             input.addEventListener('change', onFormChangeCallback);
         }
     });
 
     heirsContainer.appendChild(clone);
     updateHeirNumbers();
-    updateHeirHeader(form); // Set initial header state
     return heirId;
-}
-
-function updateHeirHeader(formElement) {
-    if (!formElement) return;
-    const status = formElement.querySelector('select[id^="heirStatus"]')?.value || '';
-    const assetValueRaw = formElement.querySelector('input[id^="heirAssetValue"]')?.value || '0';
-    const assetValue = parseFormattedNumber(assetValueRaw);
-
-    const statusPreview = formElement.querySelector('.heir-status-preview');
-    const assetPreview = formElement.querySelector('.heir-asset-preview');
-
-    if (statusPreview) {
-        statusPreview.textContent = status;
-    }
-    if (assetPreview) {
-        assetPreview.textContent = `D: ${formatNumber(assetValue)} 円`;
-    }
 }
 
 function updateHeirNumbers() {
@@ -134,24 +108,24 @@ function updateHeirNumbers() {
  */
 export function getFormData() {
     const data = {};
-    // Card 1: 今回の相続
-    data.deceasedName = document.getElementById('deceasedName')?.value;
-    data.secondInheritanceDate = document.getElementById('secondInheritanceDate')?.value;
 
-    // Card 2: 前回の相続
-    data.firstDeceasedRelation = document.getElementById('firstDeceasedRelation')?.value;
+    // 1次相続
+    data.firstDeceasedName = document.getElementById('firstDeceasedName')?.value;
     data.firstInheritanceDate = document.getElementById('firstInheritanceDate')?.value;
-    data.previousTaxAmount = parseFormattedNumber(document.getElementById('previousTaxAmount')?.value);
-    data.previousAssetValue = parseFormattedNumber(document.getElementById('previousAssetValue')?.value);
 
-    // Card 3: 今回の相続人
-    data.totalAssetValue = parseFormattedNumber(document.getElementById('totalAssetValue')?.value);
+    // 2次相続
+    data.secondDeceasedName = document.getElementById('secondDeceasedName')?.value;
+    data.secondInheritanceDate = document.getElementById('secondInheritanceDate')?.value;
+    data.previousTaxAmount = parseFormattedNumber(document.getElementById('previousTaxAmount')?.value); // A
+    data.previousAssetValue = parseFormattedNumber(document.getElementById('previousAssetValue')?.value); // B
+    data.totalAssetValue = parseFormattedNumber(document.getElementById('totalAssetValue')?.value); // C
+
+    // 相続人
     data.heirs = Array.from(document.querySelectorAll('#heirsContainer .heir-form')).map(form => ({
         id: form.dataset.heirId,
         name: form.querySelector('.heir-name')?.value,
-        relation: form.querySelector('.heir-relation')?.value,
         status: form.querySelector('select[id^="heirStatus"]')?.value || '法定相続人',
-        assetValue: parseFormattedNumber(form.querySelector('input[id^="heirAssetValue"]')?.value)
+        assetValue: parseFormattedNumber(form.querySelector('input[id^="heirAssetValue"]')?.value) // D
     }));
     
     return data;
@@ -162,39 +136,35 @@ export function getFormData() {
  * @param {object} data - フォームに設定するデータ。
  */
 export function setFormData(data) {
-    // Card 1
-    document.getElementById('deceasedName').value = data.deceasedName || '';
-    document.getElementById('secondInheritanceDate').value = data.secondInheritanceDate || '';
-    
-    // Card 2
-    document.getElementById('firstDeceasedRelation').value = data.firstDeceasedRelation || 'spouse';
+    // 1次相続
+    document.getElementById('firstDeceasedName').value = data.firstDeceasedName || '';
     document.getElementById('firstInheritanceDate').value = data.firstInheritanceDate || '';
-
-    const prevTaxEl = document.getElementById('previousTaxAmount');
-    prevTaxEl.value = formatNumber(data.previousTaxAmount || 0);
     
-    const prevAssetEl = document.getElementById('previousAssetValue');
-    prevAssetEl.value = formatNumber(data.previousAssetValue || 0);
+    // 2次相続
+    document.getElementById('secondDeceasedName').value = data.secondDeceasedName || '';
+    document.getElementById('secondInheritanceDate').value = data.secondInheritanceDate || '';
+    document.getElementById('previousTaxAmount').value = formatNumber(data.previousTaxAmount || 0);
+    document.getElementById('previousAssetValue').value = formatNumber(data.previousAssetValue || 0);
+    document.getElementById('totalAssetValue').value = formatNumber(data.totalAssetValue || 0);
 
-    // Card 3
-    const totalAssetEl = document.getElementById('totalAssetValue');
-    totalAssetEl.value = formatNumber(data.totalAssetValue || 0);
-
+    // 相続人
     const heirsContainer = document.getElementById('heirsContainer');
     heirsContainer.innerHTML = ''; // Clear existing heirs
 
-    data.heirs.forEach(heirData => {
-        const heirId = addHeirForm();
-        const form = document.querySelector(`.heir-form[data-heir-id="${heirId}"]`);
-        if (form) {
-            form.querySelector('.heir-name').value = heirData.name || '';
-            form.querySelector('.heir-relation').value = heirData.relation || '長男';
-            form.querySelector('select[id^="heirStatus"]').value = heirData.status || '法定相続人';
-            const heirAssetEl = form.querySelector('input[id^="heirAssetValue"]');
-            heirAssetEl.value = formatNumber(heirData.assetValue || 0);
-            updateHeirHeader(form); // Update header after setting data
-        }
-    });
+    if (data.heirs && data.heirs.length > 0) {
+        data.heirs.forEach(heirData => {
+            const heirId = addHeirForm();
+            const form = document.querySelector(`.heir-form[data-heir-id="${heirId}"]`);
+            if (form) {
+                form.querySelector('.heir-name').value = heirData.name || '';
+                form.querySelector('select[id^="heirStatus"]').value = heirData.status || '法定相続人';
+                form.querySelector('input[id^="heirAssetValue"]').value = formatNumber(heirData.assetValue || 0);
+            }
+        });
+    } else {
+        // データがない場合でも、最低1つのフォームは表示する
+        addHeirForm();
+    }
     
     onFormChangeCallback();
 }

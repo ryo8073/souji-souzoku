@@ -1,6 +1,6 @@
 'use strict';
 
-import { calculateElapsedYears } from './date-utils.js';
+import { calculateYearsBetween } from './date-utils.js';
 
 /**
  * 小数点以下第4位で切り捨て（トルンケート）するヘルパー関数
@@ -12,101 +12,72 @@ function truncate(num) {
 }
 
 /**
- * 相次相続控除額の計算を実行します。
- * @param {object} inputData - 計算に必要な入力データ。
+ * 相次相続控除に関連するすべての値を計算します。
+ * @param {object} data - getFormDataから返されるフォームデータ。
  * @returns {object} 計算結果。
  */
-export function calculateAll(inputData) {
-    const { 
-        firstInheritanceDate, 
-        secondInheritanceDate,
-        previousTaxAmount,
-        previousAssetValue,
-        totalAssetValue,
-        heirs
-    } = inputData;
+export function calculateAll(data) {
+    const yearsPassed = calculateYearsBetween(data.firstInheritanceDate, data.secondInheritanceDate);
 
-    const result = {
-        totalDeduction: 0,
-        heirCalculations: [],
-        status: '適用可',
-        message: ''
-    };
-
-    // E: 経過年数の計算
-    const { years: E } = calculateElapsedYears(firstInheritanceDate, secondInheritanceDate);
+    // A: 前の相続で今回の被相続人が納付した相続税額
+    const A = data.previousTaxAmount || 0;
+    // B: 前の相続で今回の被相続人が取得した財産の価額
+    const B = data.previousAssetValue || 0;
+    // C: 今回の相続で全員が取得した純資産価額の合計
+    const C = data.totalAssetValue || 0;
     
-    // A: 前回の相続で納めた相続税額
-    const A = previousTaxAmount;
-
-    // B: 前回に取得した財産の価額
-    const B = previousAssetValue;
-    
-    // C: 今回の相続財産の総額
-    const C = totalAssetValue;
-
-    // 控除の基本条件をチェック
-    if (E >= 10) {
-        result.status = '適用不可';
-        result.message = `経過年数が10年を超えているため、相次相続控除は適用されません。（経過年数: ${E}年）`;
-        result.heirCalculations = heirs.map(h => ({ ...h, deductionAmount: 0 }));
-        return result;
-    }
-    if (A <= 0) {
-        result.status = '適用不可';
-        result.message = '前回の相続で納めた相続税額が0のため、相次相続控除は適用されません。';
-        result.heirCalculations = heirs.map(h => ({ ...h, deductionAmount: 0 }));
-        return result;
-    }
-    if ((B - A) <= 0) {
-        result.status = '適用不可';
-        result.message = '前回の相続で取得した財産の価額が、納めた相続税額以下のため、控除額は0円となります。';
-        result.heirCalculations = heirs.map(h => ({ ...h, deductionAmount: 0 }));
-        return result;
-    }
-
     let totalDeduction = 0;
-    const heirCalculations = heirs.map(heir => {
-        let deductionAmount = 0;
-        
-        // D: 相続人が今回取得した財産の価額
-        const D = heir.assetValue;
+    const heirResults = [];
 
-        // 「法定相続人」かつ取得財産がプラスの場合のみが計算対象
-        if (heir.status === '法定相続人' && D > 0) {
-            // 計算式の各項を計算
-            
-            // 1. C / (B - A) の計算 (1以上は1とする)
-            const B_A_diff = B - A;
-            let ratio1 = B_A_diff > 0 ? C / B_A_diff : 0;
-            if (ratio1 > 1) {
-                ratio1 = 1;
-            }
-
-            // 2. D / C の計算 (小数点以下第4位で切り捨て)
-            let ratio2 = C > 0 ? D / C : 0;
-            ratio2 = truncate(ratio2);
-
-            // 3. (10 - E) / 10 の計算 (小数点以下第4位で切り捨て)
-            let ratio3 = (10 - E) / 10;
-            ratio3 = truncate(ratio3);
-
-            // 最終的な控除額を計算
-            const deduction = A * ratio1 * ratio2 * ratio3;
-            
-            // 計算結果は小数点以下を切り捨てる
-            deductionAmount = Math.floor(deduction);
-        }
-        
-        totalDeduction += deductionAmount;
+    // 計算の基本条件をチェック
+    // 経過年数が10年以上、または前の相続の財産価額が相続税額以下の場合、控除は適用されない
+    if (yearsPassed >= 10 || yearsPassed < 0 || B <= A) {
+        data.heirs.forEach(heir => {
+            heirResults.push({
+                id: heir.id,
+                name: heir.name,
+                deduction: 0
+            });
+        });
         return {
-            ...heir,
-            deductionAmount
+            yearsPassed,
+            totalDeduction: 0,
+            heirResults,
+            error: yearsPassed >= 10 ? "期間が10年を超えているため、控除対象外です。" : null
         };
+    }
+
+    // 計算式の共通部分
+    // C / (B - A) の比率は1を超えることはない
+    const b_minus_a = B - A;
+    const c_div_b_minus_a = (C > 0 && b_minus_a > 0) ? Math.min(1, C / b_minus_a) : 0;
+    const time_ratio = (10 - yearsPassed) / 10;
+    
+    const baseDeduction = A * c_div_b_minus_a * time_ratio;
+
+    data.heirs.forEach(heir => {
+        // D: 各相続人が取得した財産の価額
+        const D = heir.assetValue || 0;
+        let heirDeduction = 0;
+
+        // ステータスが「法定相続人」の場合のみ計算
+        if (heir.status === '法定相続人' && C > 0 && D > 0) {
+            const heir_ratio = D / C;
+            heirDeduction = baseDeduction * heir_ratio;
+        }
+
+        totalDeduction += heirDeduction;
+        heirResults.push({
+            id: heir.id,
+            name: heir.name,
+            deduction: heirDeduction
+        });
     });
 
-    result.totalDeduction = totalDeduction;
-    result.heirCalculations = heirCalculations;
-    
-    return result;
+    return {
+        yearsPassed,
+        totalDeduction,
+        heirResults,
+        error: null
+    };
 }

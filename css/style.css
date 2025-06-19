@@ -190,19 +190,21 @@ body {
 }
 .input-group {
     display: flex;
+    align-items: center;
 }
-.input-group .form-control {
-    flex: 1;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+.input-group label {
+    margin-right: 1rem;
+    flex-shrink: 0;
 }
-.input-group-text {
-    padding: 0.6rem;
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-left: none;
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+.input-group input,
+.input-group select {
+    flex-grow: 1;
+    min-width: 0;
+}
+.input-group .unit {
+    margin-left: 0.5rem;
+    color: #555;
+    flex-shrink: 0;
 }
 
 /*

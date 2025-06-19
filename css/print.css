@@ -1,173 +1,126 @@
 /* css/print.css */
 
-@media print {
+@charset "UTF-8";
 
-    /* Page setup */
+@media print {
     @page {
-        size: A4 portrait;
-        margin: 20mm;
+        size: A4 landscape;
+        margin: 15mm;
     }
 
     body {
-        font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', '游ゴシック Medium', 'Yu Gothic Medium', 'メイリオ', Meiryo, sans-serif;
-        background-color: #fff;
-        color: #000;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-size: 9pt;
+        background-color: #fff !important;
+        min-width: 0 !important;
     }
 
-    /* Hide unnecessary elements */
-    .header__actions,
-    .btn,
-    .btn-icon,
-    .btn-remove-heir,
-    #addHeirBtn,
-    .family-tree-section__controls,
-    .footer,
-    #helpModal,
-    .card__header button,
-    .input-section .form-control,
-    .input-section .number-input,
-    .input-section .input-group-text,
-    .input-section .form-text {
+    /* Hide non-essential elements */
+    header, footer, .actions, .info-icon, #addHeirBtn, .heir-form__actions, .tooltip-content {
         display: none !important;
     }
 
-    /* Keep header title and footer disclaimer */
-    .header {
-        border-bottom: 2px solid #000;
-        padding-bottom: 10px;
-    }
-
-    .footer {
-        display: block !important;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        border-top: 1px solid #000;
-        padding-top: 10px;
-        text-align: center;
-    }
-
-    .footer p:first-child {
-        display: none;
-    }
-
-    /* General layout adjustments */
     .container {
-        width: 100%;
-        max-width: 100%;
-        padding: 0;
-        margin: 0;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
     }
 
-    .main-content {
-        display: block; /* Force single column layout */
+    /* --- Force the grid layout for printing --- */
+    .simulation-grid {
+        display: grid !important;
+        grid-template-columns: 0.5fr 0.5fr 120px 0.5fr 0.5fr 120px 1.2fr !important;
+        grid-template-rows: auto auto !important;
+        gap: 12px 16px !important;
+        width: 100% !important;
     }
 
-    .card {
-        border: 1px solid #ccc;
-        box-shadow: none;
-        page-break-inside: avoid;
-        margin-bottom: 15px;
+    /* Explicitly place each item in the grid, overriding responsive stacking */
+    #step1-card, #step2-card, #step3-card, #step4-card, #step5-card, #arrow1, #arrow2 {
+        grid-row: auto !important; /* Reset any row spans from screen styles */
+        grid-column: auto !important; /* Reset any column spans from screen styles */
     }
 
-    /* Make explanation section fully visible */
-    .explanation-section .card__body {
+    #step1-card  { grid-column: 1 / span 2 !important; grid-row: 1 !important; }
+    #arrow1      { grid-column: 3 !important; grid-row: 1 !important; }
+    #step3-card  { grid-column: 4 / span 2 !important; grid-row: 1 !important; }
+    #arrow2      { grid-column: 6 !important; grid-row: 1 !important; }
+    #step5-card  { grid-column: 7 !important; grid-row: 1 / span 2 !important; }
+    #step2-card  { grid-column: 2 / span 2 !important; grid-row: 2 !important; }
+    #step4-card  { grid-column: 5 / span 2 !important; grid-row: 2 !important; }
+    /* --- End Grid Layout --- */
+
+
+    /* General styling for printed cards */
+    .flow-card, .heir-form {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        page-break-inside: avoid; /* Prevent cards from splitting across pages */
+        background: #fff !important;
+    }
+
+    .card-header { padding: 0.5rem 0.75rem; }
+    .card-body { padding: 0.75rem; }
+    .step-label { padding: 2px 6px; font-size: 8pt; background-color: #4A5568 !important;}
+    h2 { font-size: 11pt; }
+
+    /* Make inputs look like static text */
+    input[type="text"], input[type="date"], select {
+        border: none !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+    .input-with-unit .unit {
+       display: inline !important; /* Keep the '円' unit */
+       margin-left: 0.25rem;
+    }
+
+    /* Ensure heir forms show collapsed view */
+    .heir-form__body {
+        display: none !important; /* Hide the full form body */
+    }
+    .heir-form__header {
+        padding: 0.75rem;
+        border-bottom: none !important;
+    }
+    .heir-form__info { font-size: 8pt; }
+
+    .arrow-wrapper {
+        padding-top: 4rem !important;
+    }
+
+    /* Make sure arrow wrappers are visible */
+    #arrow1, #arrow2 {
         display: block !important;
-        max-height: none !important;
     }
 
-    /* Style input sections for printing */
-    .input-section {
-        margin-bottom: 20px;
+    /* --- Force Horizontal Arrow Styles for Print using IDs for high specificity --- */
+    #arrow1 .arrow-label, #arrow2 .arrow-label,
+    #arrow1 .arrow-body, #arrow2 .arrow-body {
+        display: block !important; /* Override mobile screen styles */
     }
 
-    .input-section .form-group {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .input-section label {
-        font-weight: 500;
-        margin-right: 1em;
-    }
-    
-    .heir-form {
-        border-top: 1px solid #eee;
-        padding-top: 15px;
-        margin-top: 15px;
-    }
-    
-    .heir-form__header h3 {
-        margin-bottom: 10px;
-    }
-
-    /* Family Tree */
-    .family-tree-section {
-        page-break-before: always; /* Start on a new page */
-    }
-
-    .family-tree-container {
+    #arrow1 .arrow-body, #arrow2 .arrow-body {
         width: 100% !important;
-        /* A4 height (297mm) - top/bottom margins (20mm * 2) = 257mm. Give a bit of slack. */
-        height: 250mm !important;
-        overflow: visible !important;
-        border: 1px solid #ccc;
+        height: 2px !important;
+        margin: 8px 0 !important;
+        background: linear-gradient(to right, #ccc, #ccc 50%, transparent 50%) !important;
+        background-size: 16px 2px !important;
+        position: relative !important;
     }
-
-    .family-tree-container svg {
-        width: 100% !important;
-        height: auto !important;
-        transform: none !important; /* Reset zoom/pan */
+    #arrow1 .arrow-body::after, #arrow2 .arrow-body::after {
+        content: '' !important;
+        position: absolute !important;
+        right: -6px !important;
+        top: -5px !important;
+        bottom: auto !important; /* Override mobile styles */
+        border: solid #ccc !important;
+        border-width: 0 2px 2px 0 !important;
+        display: inline-block !important;
+        padding: 5px !important;
+        transform: rotate(-45deg) !important; /* Right-pointing arrow */
     }
-
-    /* Results section */
-    .results-section {
-        page-break-before: auto;
-    }
-
-    .result-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .result-table th,
-    .result-table td {
-        border: 1px solid #000;
-        padding: 8px;
-        text-align: left;
-    }
-
-    .result-table th {
-        background-color: #f2f2f2;
-    }
-
-    .total-deduction {
-        font-size: 1.5em;
-        font-weight: bold;
-        text-align: right;
-        border-top: 2px solid #000;
-        border-bottom: 2px solid #000;
-        padding: 10px;
-        margin: 20px 0;
-    }
-
-    /* This class is added by JavaScript to display form values */
-    .printable-value {
-        padding: 5px;
-        border: 1px solid #ddd;
-        background-color: #f9f9f9;
-        min-width: 150px;
-        text-align: right;
-        display: inline-block !important; /* Make sure it shows up */
-    }
-}
-
-/* By default, the printable value holders are not displayed */
-.printable-value {
-    display: none;
 }
