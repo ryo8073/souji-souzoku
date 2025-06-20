@@ -133,6 +133,7 @@ export function initializeTooltips() {
         const infoIcon = e.target.closest('.info-icon');
 
         if (infoIcon) {
+            e.preventDefault();
             e.stopPropagation();
             const targetId = infoIcon.dataset.tooltipTarget;
             const tooltip = document.getElementById(targetId);
